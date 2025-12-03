@@ -30,7 +30,7 @@ namespace PokemonGame
             IsStatusMove = isStatusMove;
         }
 
-        public virtual void MoveEffect()
+        public virtual void MoveEffect(ref Pokemon pokemon)
         {
         }
     }

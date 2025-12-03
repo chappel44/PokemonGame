@@ -16,9 +16,9 @@ namespace PokemonGame
 
         public string[] ImmuneType { get; set; }
 
-        public Type(string name, string[] strongAgainst, string[] typeResistance, string[] immuneType = null)
+        public Type(string typeName, string[] strongAgainst, string[] typeResistance, string[] immuneType = null)
         {
-            Name = name;
+            Name = typeName;
             StrongAgainst = strongAgainst;
             TypeResistance = typeResistance;
             ImmuneType = immuneType;

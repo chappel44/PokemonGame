@@ -16,12 +16,23 @@ namespace PokemonGame
         bool isSunny = false;
         int turnsSunny = 5;
 
-        int textTypeSpeed = 50; //orig 50
+        int textTypeSpeed = 30; //orig 500
+
+        Dictionary<string, ConsoleColor> color = new Dictionary<string, ConsoleColor>();
+
+        void CreateTypeColor()
+        {
+            color.Add("water", ConsoleColor.DarkBlue);
+            color.Add("fire", ConsoleColor.Red);
+            color.Add("grass", ConsoleColor.Green);
+            color.Add("normal", ConsoleColor.Gray);
+            color.Add("ice", ConsoleColor.Blue);
+        }
 
         int DisplayAttacks(AttackMove[] pokemonAttacks, Trainer trainer)
         {
             int x = 0;
-            int y = 11;
+            int y = 12;//11
             for (int i = 0; i < pokemonAttacks.Count(); i++)
             {
                 Console.SetCursorPosition(x, y);
@@ -30,8 +41,10 @@ namespace PokemonGame
 
                 if (pokemonAttacks[i] != null)
                 {
+                    Console.ForegroundColor = color[pokemonAttacks[i].Type.Name]; 
                     Console.WriteLine(pokemonAttacks[i].AttackName);
-                    x += pokemonAttacks[i].AttackName.Length + 5;
+                    x += pokemonAttacks[i].AttackName.Length + 8;
+                    Console.ForegroundColor = ConsoleColor.White;
                 }
                 else
                 {
@@ -42,11 +55,20 @@ namespace PokemonGame
                 if (i == 1)
                 {
                     x = 0;
-                    y += 1;
+                    y += 2;
                 }
+                Console.WriteLine();
             }
 
-            Console.WriteLine(trainer.Name + ", which move would you like to select? 1 - 4.");
+            x += 6;
+            Console.SetCursorPosition(x, y);
+            Console.WriteLine("5) Pokémon");
+
+            x = 0;
+            y += 2;
+            Console.SetCursorPosition(x, y);
+
+            Console.WriteLine(trainer.Name + ", which move would you like to select? 1 - " + pokemonAttacks.Count());
             int choice = 0;
             bool correctInput = false;
 
@@ -60,10 +82,12 @@ namespace PokemonGame
                 {
                 }
 
-                if (choice >= 1 && choice <= 4)
+                if ((choice >= 1 && choice <= pokemonAttacks.Count() && pokemonAttacks[choice-1] != null) || choice == 5)
+                {
                     correctInput = true;
+                }
                 else
-                    Console.WriteLine("You must enter 1-4");
+                    Console.WriteLine("Invalid choice");
             }
 
             return choice - 1;
@@ -71,7 +95,7 @@ namespace PokemonGame
 
         int CalculateDamage(Pokemon poke1, Pokemon poke2, AttackMove attack)
         {
-            attack.MoveEffect();
+            attack.MoveEffect(ref poke2);
 
             if (attack.IsStatusMove)
                 return 0;
@@ -118,11 +142,15 @@ namespace PokemonGame
 
             if (attack.IsPhysicalAttack)
             {
-                damage = (((2 * poke1.Level / 5 + 2) * attack.AttackDamage * poke1.Attack / poke2.Defense) / 50 + 2) * targets * weather * critical * random * stab * typeEffectiveness * burn * other;
+                float attackStat = poke1.Attack * GetStageMultiplier(poke1.AttackStage);
+                float defenseStat = poke2.Defense * GetStageMultiplier(poke2.DefenseStage);
+                damage = (((2 * poke1.Level / 5 + 2) * attack.AttackDamage * attackStat / defenseStat) / 50 + 2) * targets * weather * critical * random * stab * typeEffectiveness * burn * other;
             }
             else
             {
-                damage = (((2 * poke1.Level / 5 + 2) * attack.AttackDamage * poke1.SpecialAttack / poke2.SpecialDefense) / 50 + 2) * targets * weather * critical * random * stab * typeEffectiveness * burn * other;
+                float specialAttackStat = poke1.SpecialAttack * GetStageMultiplier(poke1.SpecialAttackStage);
+                float specialDefenseStat = poke2.SpecialDefense * GetStageMultiplier(poke2.SpecialDefenseStage);
+                damage = (((2 * poke1.Level / 5 + 2) * attack.AttackDamage * specialAttackStat / specialDefenseStat) / 50 + 2) * targets * weather * critical * random * stab * typeEffectiveness * burn * other;
             }
 
             if (typeEffectiveness > 1)
@@ -137,6 +165,12 @@ namespace PokemonGame
             return (int)damage;
         }
 
+        float GetStageMultiplier(int stage)
+        {
+            return stage >= 0
+                ? (2.0f + stage) / 2.0f
+                : 2.0f / (2.0f - stage);
+        }
         float FindEffectiveness(AttackMove move, Pokemon poke2)
         {
             float typeEffectiveness = 1f;
@@ -200,8 +234,6 @@ namespace PokemonGame
 
         Pokemon GetPokemonChoice(Trainer trainer)
         {
-            Pokemon poke1;
-
             int x = 0;
             int y = 0;
 
@@ -215,13 +247,13 @@ namespace PokemonGame
 
             while(!correctInput)
             {
+                Console.WriteLine();
                 Console.WriteLine(trainer.Name + ", Which pokemon would you like to select?");
 
                 choice = int.Parse(Console.ReadLine());
 
                 if (choice > 0 && choice <= trainer.Team.Count)
                     correctInput = true;
-
             }
 
             Console.Clear();
@@ -267,110 +299,144 @@ namespace PokemonGame
             }
         }
 
-        public void Start(/*Pokemon poke1, Pokemon poke2, */Trainer trainer1, Trainer trainer2)
+        public void Start(Trainer trainer1, Trainer trainer2)
         {
             Pokemon poke1 = GetPokemonChoice(trainer1);
 
             Pokemon poke2 = GetPokemonChoice(trainer2);
 
+            CreateTypeColor();
 
             while (trainer1.AlivePokemon > 0 && trainer2.AlivePokemon > 0)
             {
-                float effect = 0;
+                Pokemon tempPoke1 = poke1;
+                Pokemon tempPoke2 = poke2;
+
+                Console.WriteLine(poke2.DefenseStage);
 
                 DisplayNames(poke2, poke1, trainer2, trainer1);
                 int choice1 = DisplayAttacks(poke1.MoveSet, trainer1);
 
-                Console.ReadKey();
+
+                if (choice1 == 4) //Trainer one chose to switch a pokemon out
+                {
+                    poke1.ClearStatus();
+                    tempPoke1 = poke1;
+                    poke1 = GetPokemonChoice(trainer1);
+                }
+
                 Console.Clear();
 
-                DisplayNames(poke1, poke2, trainer1, trainer2);
+                DisplayNames(tempPoke1, poke2, trainer1, trainer2);
                 int choice2 = DisplayAttacks(poke2.MoveSet, trainer2);
 
-                if (poke1.Speed > poke2.Speed) 
+                if (choice2 == 4) //Trainer two chose to switch a pokemon out
                 {
-                    PrintDelay(poke1.Name + " used " + poke1.MoveSet[choice1].AttackName + ".");
-                    int damage1 = CalculateDamage(poke1, poke2, poke1.MoveSet[choice1]);
-
-                    if (damage1 > 0)
-                        PrintDelay("It dealt " + damage1 + " damage.");
-
-                    poke2.Health -= damage1;
-
-                    if (poke2.Health <= 0)
-                    {
-                        break;
-                    }
-
-                    Console.WriteLine();
-                    Console.ReadKey();
-
-                    PrintDelay(poke2.Name + " used " + poke2.MoveSet[choice2].AttackName + ".");
-                    int damage2 = CalculateDamage(poke2, poke1, poke2.MoveSet[choice2]);
-
-                    if (damage2 > 0)
-                        PrintDelay("It dealt " + damage2 + " damage.");
-
-                    poke1.Health -= damage2;
+                    poke2.ClearStatus();
+                    tempPoke2 = poke2;
+                    poke2 = GetPokemonChoice(trainer2);
                 }
-                else
+
+                Console.Clear();
+                DisplayNames(poke2, poke1, trainer2, trainer1);
+                Console.WriteLine();
+                Console.WriteLine();
+
+                if (poke1.Speed > poke2.Speed) //Trainer 1s pokemon is faster
                 {
-                    PrintDelay(poke2.Name + " used " + poke2.MoveSet[choice2].AttackName + ".");
-                    int damage2 = CalculateDamage(poke2, poke1, poke2.MoveSet[choice2]);
-
-                    if (damage2 > 0)
-                        PrintDelay("It dealt " + damage2 + " damage.");
-
-                    poke1.Health -= damage2;
-
-                    if (poke1.Health <= 0)
+                    InitiateAttacks(ref trainer1, ref trainer2, ref poke1, ref poke2, choice1, choice2, tempPoke1, tempPoke2);
+                }
+                else if(poke2.Speed > poke1.Speed) //trainer 2s pokemon is faster
+                {
+                    InitiateAttacks(ref trainer2, ref trainer1, ref poke2, ref poke1, choice2, choice1, tempPoke2, tempPoke1);
+                }
+                else //Speed tie choose a random pokemon to go first
+                {
+                    Random ran = new Random();
+                    int num = ran.Next(1, 3);
+                    if(num == 1) //Trainer 1 goes first
                     {
-                        break;
+                        InitiateAttacks(ref trainer1, ref trainer2, ref poke1, ref poke2, choice1, choice2, tempPoke1, tempPoke2);
                     }
+                    else //Trainer 2 goes first
+                    {
+                        InitiateAttacks(ref trainer2, ref trainer1, ref poke2, ref poke1, choice2, choice1, tempPoke2, tempPoke1);
+                    }
+                }
 
-                    Console.WriteLine();
-                    Console.ReadKey();
+                if (poke1.Health <= 0)
+                {
+                    RemovePokemon(ref trainer1, ref poke1);
+                    continue;
+                }
 
-                    PrintDelay(poke1.Name + " used " + poke1.MoveSet[choice1].AttackName + ".");
-                    int damage1 = CalculateDamage(poke1, poke2, poke1.MoveSet[choice1]);
-
-                    if (damage1 > 0)
-                        PrintDelay("It dealt " + damage1 + " damage.");
-
-                    poke2.Health -= damage1;
+                if (poke2.Health <= 0)
+                {
+                    RemovePokemon(ref trainer2, ref poke2);
+                    continue;
                 }
 
                 DisplayCurrentWeather();
 
                 Console.ReadKey();
                 Console.Clear();
+            }
+        }
 
-                if (poke1.Health <= 0)
-                {
-                    //PrintDelay(poke1.Name + " fainted...");
-                    poke1 = GetPokemonChoice(trainer1);
-                    trainer1.AlivePokemon--;
-                }
-
-                if (poke2.Health <= 0)
-                {
-                    //PrintDelay(poke2.Name + " fainted...");
-                    poke2 = GetPokemonChoice(trainer2);
-                    trainer2.AlivePokemon--;
-                }
+        void InitiateAttacks(ref Trainer firstTrainer, ref Trainer secondTrainer, ref Pokemon firstAttacker, ref Pokemon secondAttacker, int attackerOneChoice, int attackerTwoChoice, Pokemon tempPoke1, Pokemon tempPoke2)
+        {
+            if (attackerOneChoice == 4)
+            {
+                PrintDelay(firstTrainer.Name + " Withdrew " + tempPoke1.Name + " and sent out " + firstAttacker.Name);
+            }
+            if(attackerTwoChoice == 4)
+            {
+                PrintDelay(secondTrainer.Name + " Withdrew " + tempPoke2.Name + " and sent out " + secondAttacker.Name);
             }
 
-            //if (poke1.Health <= 0)
-            //{
-            //    //PrintDelay(poke1.Name + " fainted...");
-            //    poke1 = GetPokemonChoice(trainer1);
-            //}
+            if (attackerOneChoice != 4)
+            {
+                PrintDelay(firstAttacker.Name + " used " + firstAttacker.MoveSet[attackerOneChoice].AttackName + ".");
+                int damage1 = CalculateDamage(firstAttacker, secondAttacker, firstAttacker.MoveSet[attackerOneChoice]);
 
-            //if (poke2.Health <= 0)
-            //{
-            //    //PrintDelay(poke2.Name + " fainted...");
-            //    poke2 = GetPokemonChoice(trainer2);
-            //}
+                if (damage1 > 0)
+                    PrintDelay("It dealt " + damage1 + " damage.");
+
+                secondAttacker.Health -= damage1;
+            }
+            if (secondAttacker.Health <= 0)
+            {
+                RemovePokemon(ref secondTrainer, ref secondAttacker);
+                return;
+            }
+
+            Console.WriteLine();
+            Console.ReadKey();
+
+            if (attackerTwoChoice != 4)
+            {
+                PrintDelay(secondAttacker.Name + " used " + secondAttacker.MoveSet[attackerTwoChoice].AttackName + ".");
+                int damage2 = CalculateDamage(secondAttacker, firstAttacker, secondAttacker.MoveSet[attackerTwoChoice]);
+
+                if (damage2 > 0)
+                    PrintDelay("It dealt " + damage2 + " damage.");
+
+                firstAttacker.Health -= damage2;
+            }
+        }
+
+
+        void RemovePokemon(ref Trainer trainer, ref Pokemon pokemon)
+        {
+            PrintDelay(pokemon.Name + " has fainted!");
+            trainer.Team.Remove(pokemon);
+            Console.ReadKey();
+            Console.Clear();
+            trainer.AlivePokemon--;
+            if (trainer.AlivePokemon > 0)
+            {
+                pokemon = GetPokemonChoice(trainer);
+            }
         }
 
         public void ActivateSunnyDay()

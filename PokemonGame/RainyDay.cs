@@ -15,7 +15,7 @@ namespace PokemonGame
             CurrentBattle = currentBattle;
         }
 
-        public override void MoveEffect()
+        public override void MoveEffect(ref Pokemon pokemon)
         {
             CurrentBattle.ActivateRainyDay();
             CurrentBattle.PrintDelay("It started raining!");

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,8 @@ namespace PokemonGame
 
         public Type Type { get; set; }
 
+        public Type Type2 { get; set; }
+
         public int Level { get; set; }
         public int Health { get; set; }
         public int OriginalHealth { get; set; }
@@ -23,6 +26,13 @@ namespace PokemonGame
         public int SpecialDefense { get; set; }
         
         public int Speed { get; set; }
+
+        public int AttackStage;
+        public int SpecialAttackStage;
+        public int DefenseStage;
+        public int SpecialDefenseStage;
+        public int SpeedStage;
+
 
         public bool IsBurned { get; set; } = false;
 
@@ -41,6 +51,26 @@ namespace PokemonGame
             SpecialDefense = specialDefense;
             Speed = speed;
             MoveSet = moveSet;
+            Type2 = type2;
+            AttackStage = 0;
+            SpecialAttackStage = 0;
+            DefenseStage = 0 ;
+            SpecialDefenseStage = 0;
+            SpeedStage = 0;
+        }
+
+        public void ClearStatus()
+        {
+            AttackStage = 0;
+            SpecialAttackStage = 0;
+            DefenseStage = 0;
+            SpecialDefenseStage = 0;
+            SpeedStage = 0;
+        }
+
+        public Pokemon Clone()
+        {
+            return new Pokemon(Name, Type, Health, Level, Attack, Defense, SpecialAttack, SpecialDefense, Speed, MoveSet, Type2);
         }
     }
 }

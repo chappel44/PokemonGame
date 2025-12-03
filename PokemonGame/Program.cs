@@ -58,10 +58,12 @@ namespace PokemonGame
             AttackMove flamethrower = new AttackMove("flamethrower", 90, 100, false, fire);
             SunnyDay sunnyDay = new SunnyDay("sunny day", 0, 0, false, fire, battle, true);
 
-            AttackMove vineWhip = new AttackMove("vine whip", 40, 100, true, grass);
+            AttackMove vineWhip = new AttackMove("vine whip", 0, 100, true, grass);
             AttackMove energyBall = new AttackMove("energy ball", 90, 100, false, grass);
 
             AttackMove iceBeam = new AttackMove("ice beam", 90, 100, false, ice);
+
+            StatusMove tailWhip = new StatusMove("tail whip", 0, 100, false, normal, StatType.Defense, -1, true);
 
             //Creates squirtles attacks
             AttackMove[] squirtleAttacks = new AttackMove[4];
@@ -75,7 +77,7 @@ namespace PokemonGame
             charmanderAttacks[0] = ember;
             charmanderAttacks[1] = flamethrower;
             charmanderAttacks[2] = tackle;
-            charmanderAttacks[3] = sunnyDay;
+            charmanderAttacks[3] = tailWhip;
 
             //Create bulbasaur attacks
             AttackMove[] bulbasaurAttacks = new AttackMove[4];
@@ -91,26 +93,26 @@ namespace PokemonGame
 
             Pokemon squirtle = new Pokemon("Squirtle", water, 25, 5, 15, 15, 15, 15, 18, squirtleAttacks);
 
-            Pokemon charmander = new Pokemon("Charmander", fire, 25, 5, 15, 15, 15, 15, 16, charmanderAttacks);
+            Pokemon charmander = new Pokemon("Charmander", fire, 25, 5, 15, 15, 15, 15, 19, charmanderAttacks);
 
             Pokemon bulbasaur = new Pokemon("Bulbasaur", grass, 25, 5, 15, 15, 15, 15, 17, bulbasaurAttacks);
 
             List<Pokemon> team1 = new List<Pokemon>(6);
-            team1.Add(squirtle);
-            team1.Add(charmander);
-            team1.Add(bulbasaur);
+            team1.Add(squirtle.Clone());
+            team1.Add(charmander.Clone());
+            team1.Add(bulbasaur.Clone());
 
             List<Pokemon> team2 = new List<Pokemon>(6);
-            team2.Add(squirtle);
-            team2.Add(charmander);
-            team2.Add(bulbasaur);
+            team2.Add(squirtle.Clone());
+            team2.Add(charmander.Clone());
+            team2.Add(bulbasaur.Clone());
 
             Trainer trainer1 = new Trainer("Chris", team1);
 
-            Trainer trainer2 = new Trainer("Frank", team2);
+            Trainer trainer2 = new Trainer("Bryan", team2);
 
             //////////////////////////////////////
-
+            
             battle.Start(trainer1, trainer2);
         }
     }
