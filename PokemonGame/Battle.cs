@@ -232,7 +232,7 @@ namespace PokemonGame
             PrintHealthStatus(poke2);
         }
 
-        Pokemon GetPokemonChoice(Trainer trainer)
+        Pokemon GetPokemonChoice(Trainer trainer, Pokemon activePokemon = null)
         {
             int x = 0;
             int y = 0;
@@ -250,10 +250,20 @@ namespace PokemonGame
                 Console.WriteLine();
                 Console.WriteLine(trainer.Name + ", Which pokemon would you like to select?");
 
-                choice = int.Parse(Console.ReadLine());
+                try
+                {
+                    choice = int.Parse(Console.ReadLine());
+                }
+                catch { Console.WriteLine("Invalid choice"); }
 
-                if (choice > 0 && choice <= trainer.Team.Count)
+                if (choice > 0 && choice <= trainer.Team.Count) //Input within the right range
                     correctInput = true;
+
+                if (activePokemon != null && trainer.Team[choice - 1] == activePokemon) //Switched pokemon is in battle already
+                {
+                    Console.WriteLine(activePokemon.Name + " Is already in battle.");
+                    correctInput = false;
+                }
             }
 
             Console.Clear();
@@ -322,7 +332,7 @@ namespace PokemonGame
                 {
                     poke1.ClearStatus();
                     tempPoke1 = poke1;
-                    poke1 = GetPokemonChoice(trainer1);
+                    poke1 = GetPokemonChoice(trainer1, poke1);
                 }
 
                 Console.Clear();
@@ -334,7 +344,7 @@ namespace PokemonGame
                 {
                     poke2.ClearStatus();
                     tempPoke2 = poke2;
-                    poke2 = GetPokemonChoice(trainer2);
+                    poke2 = GetPokemonChoice(trainer2, poke2);
                 }
 
                 Console.Clear();
@@ -388,10 +398,14 @@ namespace PokemonGame
             if (attackerOneChoice == 4)
             {
                 PrintDelay(firstTrainer.Name + " Withdrew " + tempPoke1.Name + " and sent out " + firstAttacker.Name);
+                Console.WriteLine();
+                Console.ReadKey();
             }
             if(attackerTwoChoice == 4)
             {
                 PrintDelay(secondTrainer.Name + " Withdrew " + tempPoke2.Name + " and sent out " + secondAttacker.Name);
+                Console.WriteLine();
+                Console.ReadKey();
             }
 
             if (attackerOneChoice != 4)
